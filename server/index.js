@@ -24,24 +24,19 @@ const db = createClient({
 })
 
 await db.execute(`
-  CREATE TABLE IF NOT EXISTS messages (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    content TEXT NOT NULL
-    published_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-  )
-`)
-
-await db.execute(`
   CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT (uuid_generate_v4()),
-    username TEXT NOT NULL
+    username TEXT NOT NULL,
+    password TEXT NOT NULL,
+    email TEXT NOT NULL,
   )
 `)
 await db.execute(`
   CREATE TABLE IF NOT EXISTS messages_user (
-    message_id INTEGER NOT NULL,
+    id UUID PRIMARY KEY DEFAULT (uuid_generate_v4()),
+    content TEXT NOT NULL,
+    published_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     user_id UUID NOT NULL,
-    FOREIGN KEY (message_id) REFERENCES messages (id),
     FOREIGN KEY (user_id) REFERENCES users (id)
   )
 `)
