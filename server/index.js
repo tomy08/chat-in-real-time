@@ -1,5 +1,7 @@
 import express from 'express'
 import logger from 'morgan'
+import dotenv from 'dotenv'
+import { createClient } from '@libsql/client'
 
 import { Server } from 'socket.io'
 import { createServer } from 'node:http'
@@ -8,12 +10,56 @@ const port = process.env.PORT || 3000
 
 const app = express()
 const server = createServer(app)
-const io = new Server(server)
+const io = new Server(server, {
+  connectionStateRecovery: {
+    maxDisconnectionDuration: 1000,
+  },
+})
+
+dotenv.config()
+
+const db = createClient({
+  url: process.env.DB_URL,
+  authToken: process.env.DB_AUTH_TOKEN,
+})
+
+await db.execute(`
+  CREATE TABLE IF NOT EXISTS messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    content TEXT NOT NULL
+    published_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )
+`)
+
+await db.execute(`
+  CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY DEFAULT (uuid_generate_v4()),
+    username TEXT NOT NULL
+  )
+`)
+await db.execute(`
+  CREATE TABLE IF NOT EXISTS messages_user (
+    message_id INTEGER NOT NULL,
+    user_id UUID NOT NULL,
+    FOREIGN KEY (message_id) REFERENCES messages (id),
+    FOREIGN KEY (user_id) REFERENCES users (id)
+  )
+`)
 
 io.on('connection', (socket) => {
   console.log('a user connected')
-  socket.on('chat-message', (message) => {
-    io.emit('chat-message', message)
+  socket.on('chat-message', async (message) => {
+    let result
+    try {
+      result = await db.execute({
+        sql: 'INSERT INTO messages (content) VALUES (:message)',
+        args: { message },
+      })
+    } catch (error) {
+      console.error(error)
+      return
+    }
+    io.emit('chat-message', message, result.lastInsertRowid.toString())
   })
   socket.on('disconnect', () => {
     console.log('user disconnected')

@@ -18,7 +18,7 @@ socket.on('chat-message', (message) => {
       <div class="timestamp">12:00 PM</div>
     </div>
   </div>`
-  messageContainer.insertAdjacentElement('beforeend', item)
+  messageContainer.insertAdjacentHTML('beforeend', item)
 })
 
 form.addEventListener('submit', (e) => {

@@ -23,6 +23,7 @@ body {
   display: flex;
   align-items: flex-start;
   margin-right: 0.5rem;
+  margin-top: 0.75rem;
 }
 
 .user-avatar {
