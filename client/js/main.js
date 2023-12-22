@@ -6,14 +6,30 @@ const form = document.querySelector('form')
 const input = document.querySelector('input')
 const messageContainer = document.querySelector('.chat-container')
 
-socket.on('chat-message', (message) => {
+function getInitials(sentence) {
+  return sentence
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase())
+    .join('')
+}
+
+socket.on('chat-message', async (message, userId) => {
+  const user = await fetch('/findUserWithId', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      userId: userId,
+    },
+  })
+  const { username } = await user.json()
+  const initials = getInitials(username)
   const item = `
   <div class="message-container">
     <div class="user-avatar">
-      <div class="avatar-background">JP</div>
+      <div class="avatar-background">${initials}</div>
     </div>
     <div class="message-content">
-      <div class="sender-name">Jared Palmer</div>
+      <div class="sender-name">${username}</div>
       <div class="message-text">${message}</div>
       <div class="timestamp">12:00 PM</div>
     </div>
